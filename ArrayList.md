@@ -75,29 +75,34 @@
  * @since   1.2
  */
 /**
- * Resizable-array实现了List的接口。实现所有可选的列表操作， 并且允许所有元素为null.
+ * Resizable-array实现了List的接口。实现所有列表操作， 并且允许所有元素为null.
  * 不仅实现了List接口，这个类也提供了操作数组的大小的方法，这些方法通常用来存储list.
  * 除了该类是不同步的，那么这个类就相当于Vector。
  *
- * ---
+ * size,isEmpty,get,set,interator,listIterator都是已固定时间运行。add操作以分摊的固定时间
+ * 运行，也就是添加n各元素，需要O(n)的时间。所有其他操作都已线性时间运行。
+ * 与用于LinkedList实现的常数因子相比，此实现的常数因子较低。
+ *
  * 每一个ArrayList实例都有容量。容量是list中存储元素的数组的个数。它总是至少和list的大小一样大。
- * 作为一个元素添加到ArrayList中，容量自动增长。增长策略的细节并不是在添加元素具有固定摊销时间
- * 成本的情况下指定的。
- * 在使用ensureCapacity方法添加大量元素之前，应用程序可以改变ArrayList实例的容量。
- * 这样可以减少增量再分配的数量。
+ * 作为一个元素添加到ArrayList中，容量自动增长。并未指定增长策略的细节，
+ * 因为这不只是添加元素会带来分摊固定时间开销那么简单。
+ *
+ * 在添加大容量元素之前，我们需要使用ensureCapacity操作，提升ArrayList实例的容量。
+ * 这可以减少递增式再分配的容量。
+ *
  * 需要注意的是，这个实现并不是同步的。如果多线程同时访问同一个ArrayList实例，并且至少有一个
- * 线程修改了list的结构，他必须与外部同步。结构上的修改包括add、delete一个或多个元素，或者调整
+ * 线程修改了list的结构，他必须保持外部同步。结构上的修改包括add、delete一个或多个元素，或者调整
  * 数组的大小；只是设置一个元素的具体值并不是一种结构调整。通常需要一些object做同步，
  * 来完成自然分装列表。
  * 如果没有object去进行同步的话，那么list就需要使用
- * Collections.synchronizedList Collections.synchronizedList方法进行分装。
- * 这样可以防止意外的并且没有进行同步的情况下去或得list实例。
+ * Collections.synchronizedList Collections.synchronizedList方法进行封装。
+ * 这样可以防止意外的并且没有进行同步的情况下去获得list实例。
  * List list = Collections.synchronizedList(new ArrayList(...));
  * 可以通过类的iterator()方法获得迭代器，并且listIterator()方法是快速失效，如果list的结构在iterator
- * 创建之后的任意时间内被修改了，如果通过迭代器自身 ListIterator#remove()、ListIterator#add(Object)
- * 方法外iterator会抛出一个异常ConcurrentModificationException。因此面对并行修改，迭代器会快速并且干净
- * 返回失败，而不是在未来某个不确定的时间内冒险或者不确定的行为。
- * 注意，迭代器的fail-fast行为不能得到保证，因为，在没有同步并发修改的情况下不会获得任何的硬保证。
+ * 创建之后的任意时间内被除了自身的 ListIterator#remove()、ListIterator#add(Object)
+ * 方法外修改了，iterator都会抛出一个异常ConcurrentModificationException。
+ * 因此面对并行修改，迭代器很快就会完全失败，而不是在未来某个不确定的时间发生任意不确定的行为的风险。
+ * 注意，迭代器的fail-fast行为不能得到保证，因为，在没有同步并发修改的情况下不会获得任何的硬性保证。
  * fail-fast迭代器会抛出ConcurrentModificationException异常。因此写程序时依赖这个异常来保证
  * 正确性是错误的，迭代器的fail-fast行为应该只能用来检测缺陷。
  */
@@ -646,7 +651,7 @@ public class ArrayList<E> extends AbstractList<E>
      *
      * 将指定集合的所有元素添加到list的尾部，顺序为给定集合的迭代器返回的顺序。
      * 该操作行为是未定义的，如果指定集合在该操作正在进行的时候被修改了。
-     * 这就意味着，调用行为是未定义的，如果指定集合是list本省，并且list是非空集合。
+     * 这就意味着，调用行为是未定义的，如果指定集合是list本身，并且list是非空集合。
      *
      * @param c collection containing elements to be added to this list
      * @return <tt>true</tt> if this list changed as a result of the call
@@ -668,6 +673,9 @@ public class ArrayList<E> extends AbstractList<E>
      * the right (increases their indices).  The new elements will appear
      * in the list in the order that they are returned by the
      * specified collection's iterator.
+     * 将制定的集合的所有元素插入到当前的list中，并在指定位置开始插入。
+     * 移动当前为位置的所有元素并且后续的元素都向右移动。
+     * 在list中的新的元素的顺序与给定集合的迭代器返回的顺序相同。
      *
      * @param index index at which to insert the first element from the
      *              specified collection
@@ -701,6 +709,9 @@ public class ArrayList<E> extends AbstractList<E>
      * This call shortens the list by {@code (toIndex - fromIndex)} elements.
      * (If {@code toIndex==fromIndex}, this operation has no effect.)
      *
+     * 删除指定区间的所有元素，fromIndex<= index < toIndex。
+     * 向左移动所有后续的元素。这将会使list缩减（toIndex-fromIndex）个元素。
+     * 如果toIndex==fromIndex，则此操作无效。
      * @throws IndexOutOfBoundsException if {@code fromIndex} or
      *         {@code toIndex} is out of range
      *         ({@code fromIndex < 0 ||
@@ -742,6 +753,7 @@ public class ArrayList<E> extends AbstractList<E>
      * Removes from this list all of its elements that are contained in the
      * specified collection.
      *
+     * 删除list中所有包含与指定集合相同的元素。
      * @param c collection containing elements to be removed from this list
      * @return {@code true} if this list changed as a result of the call
      * @throws ClassCastException if the class of an element of this list
@@ -762,6 +774,7 @@ public class ArrayList<E> extends AbstractList<E>
      * Retains only the elements in this list that are contained in the
      * specified collection.  In other words, removes from this list all
      * of its elements that are not contained in the specified collection.
+     * 只保留list中与指定集合相同的元素。也就是说，移除list所有没有在指定集合中的元素。
      *
      * @param c collection containing elements to be retained in this list
      * @return {@code true} if this list changed as a result of the call
@@ -779,6 +792,9 @@ public class ArrayList<E> extends AbstractList<E>
         return batchRemove(c, true);
     }
 
+    /**
+     * 批量删除元素，complement决定是保留还是删除指定元素。true保留，false删除
+     */
     private boolean batchRemove(Collection<?> c, boolean complement) {
         final Object[] elementData = this.elementData;
         int r = 0, w = 0;
@@ -790,6 +806,7 @@ public class ArrayList<E> extends AbstractList<E>
         } finally {
             // Preserve behavioral compatibility with AbstractCollection,
             // even if c.contains() throws.
+            // 如果有崩溃，会将从崩溃的位置后面的元素，依次复制到写入位置。
             if (r != size) {
                 System.arraycopy(elementData, r,
                                  elementData, w,
@@ -811,7 +828,8 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Save the state of the <tt>ArrayList</tt> instance to a stream (that
      * is, serialize it).
-     *
+     * 将ArrayList的实例转态保存为一个流，也就是序列化它。该方法会被反射的方式使用。
+     * 复写该方法，也就是复写了序列化的默认方法
      * @serialData The length of the array backing the <tt>ArrayList</tt>
      *             instance is emitted (int), followed by all of its elements
      *             (each an <tt>Object</tt>) in the proper order.
@@ -820,6 +838,7 @@ public class ArrayList<E> extends AbstractList<E>
         throws java.io.IOException{
         // Write out element count, and any hidden stuff
         int expectedModCount = modCount;
+        // 执行默认的序列化机制
         s.defaultWriteObject();
 
         // Write out size as capacity for behavioural compatibility with clone()
@@ -829,10 +848,11 @@ public class ArrayList<E> extends AbstractList<E>
         for (int i=0; i<size; i++) {
             s.writeObject(elementData[i]);
         }
-
+        // 在序列的时候，有线程操作了该list导致结构发生改变，那么将抛出异常。
         if (modCount != expectedModCount) {
             throw new ConcurrentModificationException();
         }
+        // ArrayList的系列化，只是保存了size和elementData
     }
 
     /**
@@ -846,7 +866,7 @@ public class ArrayList<E> extends AbstractList<E>
         // Read in size, and any hidden stuff
         s.defaultReadObject();
 
-        // Read in capacity
+        // Read in capacity 读出size
         s.readInt(); // ignored
 
         if (size > 0) {
@@ -869,6 +889,9 @@ public class ArrayList<E> extends AbstractList<E>
      * An initial call to {@link ListIterator#previous previous} would
      * return the element with the specified index minus one.
      *
+     * 返回一个list所有元素的迭代器，开始于指定的位置。
+     * 指定的index指示着初次调用next所返回的值。
+     * 初次调用previous会返回指定index-1的值。
      * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
      *
      * @throws IndexOutOfBoundsException {@inheritDoc}
@@ -882,6 +905,7 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Returns a list iterator over the elements in this list (in proper
      * sequence).
+     * 返回一个包含list所有元素的 list iterator。
      *
      * <p>The returned list iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
      *
@@ -894,6 +918,7 @@ public class ArrayList<E> extends AbstractList<E>
     /**
      * Returns an iterator over the elements in this list in proper sequence.
      *
+     * 返回一个包含所有list元素的iterator
      * <p>The returned iterator is <a href="#fail-fast"><i>fail-fast</i></a>.
      *
      * @return an iterator over the elements in this list in proper sequence
@@ -912,9 +937,15 @@ public class ArrayList<E> extends AbstractList<E>
         // anyway (and cause next() to throw) so saving this value will guarantee that the
         // value of hasNext() remains stable and won't flap between true and false when elements
         // are added and removed from the list.
+
+        // Android-changed: 添加了limit字段，用来检测迭代器结束。limit是在创建iterator
+        // 时list的size。 添加或者删除元素会引起iteration失效。不管怎样，保存limit值时要保证hasNext()
+        // 的值保持稳定，并且要保证当list中的元素被添加或者删除时不会在true or false之间徘徊。
         protected int limit = ArrayList.this.size;
 
         int cursor;       // index of next element to return
+
+        // 指定最后一个已经通过next返回的元素的index
         int lastRet = -1; // index of last element returned; -1 if no such
         int expectedModCount = modCount;
 
@@ -924,6 +955,7 @@ public class ArrayList<E> extends AbstractList<E>
 
         @SuppressWarnings("unchecked")
         public E next() {
+            // 如果结构发生变化，会抛出异常
             if (modCount != expectedModCount)
                 throw new ConcurrentModificationException();
             int i = cursor;
@@ -936,6 +968,7 @@ public class ArrayList<E> extends AbstractList<E>
             return (E) elementData[lastRet = i];
         }
 
+        // 移除最后一个已经通过next获取的元素。
         public void remove() {
             if (lastRet < 0)
                 throw new IllegalStateException();
@@ -956,6 +989,7 @@ public class ArrayList<E> extends AbstractList<E>
         @Override
         @SuppressWarnings("unchecked")
         public void forEachRemaining(Consumer<? super E> consumer) {
+            // 该方法用于，遍历迭代器剩余的元素
             Objects.requireNonNull(consumer);
             final int size = ArrayList.this.size;
             int i = cursor;
@@ -980,6 +1014,7 @@ public class ArrayList<E> extends AbstractList<E>
 
     /**
      * An optimized version of AbstractList.ListItr
+     * ListItr提供了比Itr更多的功能，可以向前遍历、set、add。
      */
     private class ListItr extends Itr implements ListIterator<E> {
         ListItr(int index) {
@@ -1020,6 +1055,7 @@ public class ArrayList<E> extends AbstractList<E>
                 throw new ConcurrentModificationException();
 
             try {
+                // 在最后一个已经被遍历的index处，设置新值
                 ArrayList.this.set(lastRet, e);
             } catch (IndexOutOfBoundsException ex) {
                 throw new ConcurrentModificationException();
@@ -1032,9 +1068,10 @@ public class ArrayList<E> extends AbstractList<E>
 
             try {
                 int i = cursor;
+                // 在下一个被遍历的位置，插入一个元素。
                 ArrayList.this.add(i, e);
                 cursor = i + 1;
-                lastRet = -1;
+                lastRet = -1; // 此操作会重置lastRet
                 expectedModCount = modCount;
                 limit++;
             } catch (IndexOutOfBoundsException ex) {
@@ -1051,6 +1088,11 @@ public class ArrayList<E> extends AbstractList<E>
      * changes in the returned list are reflected in this list, and vice-versa.
      * The returned list supports all of the optional list operations.
      *
+     * 返回list在fromIndex<=index<toIndex范围内的子list。如果fromIndex==toIndex相等
+     * 则返回一个空的list。返回的list是受到当前list支持，返回的list与当前list
+     * 没有结构上的变化，反之亦然。返回的list支持当前list的所有操作。
+     *
+     *
      * <p>This method eliminates the need for explicit range operations (of
      * the sort that commonly exist for arrays).  Any operation that expects
      * a list can be used as a range operation by passing a subList view
@@ -1059,9 +1101,17 @@ public class ArrayList<E> extends AbstractList<E>
      * <pre>
      *      list.subList(from, to).clear();
      * </pre>
+     *
+     * 这个方法是清除操作，其需要指定操作范围。任何操作都期待一个list可以被用来
+     * 作为一个通过传递子list视图来替换整个list的操作范围。例如下面的代码，删除了list中一段范围
+     * 内的元素。
+     *
      * Similar idioms may be constructed for {@link #indexOf(Object)} and
      * {@link #lastIndexOf(Object)}, and all of the algorithms in the
      * {@link Collections} class can be applied to a subList.
+     *
+     * 类似的语法可以通过indexOf、lastIndexOf构建，并且在Collections的所有语法都应用到一个
+     * 子list中。
      *
      * <p>The semantics of the list returned by this method become undefined if
      * the backing list (i.e., this list) is <i>structurally modified</i> in
@@ -1069,6 +1119,8 @@ public class ArrayList<E> extends AbstractList<E>
      * those that change the size of this list, or otherwise perturb it in such
      * a fashion that iterations in progress may yield incorrect results.)
      *
+     * 如果支持的list，也就是原list通过被返回的list修改了结构那么被返回的list会变成未定义的。
+     * 结构变化也就是，list的大小变化，或者以扰乱iteration方式，使进行中产生错误的结果。
      * @throws IndexOutOfBoundsException {@inheritDoc}
      * @throws IllegalArgumentException {@inheritDoc}
      */
@@ -1087,6 +1139,10 @@ public class ArrayList<E> extends AbstractList<E>
                                                ") > toIndex(" + toIndex + ")");
     }
 
+    /**
+     * SubList类似于代理，所有方法都会传递到parent去执行。但是可以访问的大小范围等都是指定的。
+     * 所有的get\set\remove等方法都是传递给parent去执行。
+     */
     private class SubList extends AbstractList<E> implements RandomAccess {
         private final AbstractList<E> parent;
         private final int parentOffset;
@@ -1326,6 +1382,7 @@ public class ArrayList<E> extends AbstractList<E>
         @SuppressWarnings("unchecked")
         final E[] elementData = (E[]) this.elementData;
         final int size = this.size;
+        //forEach的方法内部也是传统的for循环方式去迭代
         for (int i=0; modCount == expectedModCount && i < size; i++) {
             action.accept(elementData[i]);
         }
@@ -1389,7 +1446,21 @@ public class ArrayList<E> extends AbstractList<E>
          * less-often-used methods cannot take advantage of most of
          * these streamlinings.
          */
-
+        // 如果ArrayList是不变的，或者结构不变（没有添加、删除等）。我们就可以
+        // 用Arrays.spliterator实现spliterator。相反，我们在遍历过程中检测到尽可能多的干扰，
+        // 而不牺牲大量的性能。我们主要依靠这个字段modCounts。这些不能保证检测并发冲突。
+        // 在线程干扰中有时过于保守，但是在实践过程中发现足够多的问题是值得的。
+        // 贯彻执行，我们是懒加载fence和expectedModCount，直到我们需要提交我们正在检测的反对
+        // 的状态，从而提高精度。创建具有当前非惰性的值的spliterators，这不适用于SubLists。
+        // 我们仅在forEach结束时进行一次ConcurrentModificationException检测（性能上最敏感的方法）。
+        // 当时用forEach时（与iterators相反时），我们通常仅检测动作之后的干扰，而不是之前。
+        // 继续CME-triggering检测，适应于所有其他可能违反的假设，例如null或者给定的array的
+        // 元素大小太小，这些仅能因为干扰而发生。允许forEach的内在循环，在没有任何进一步检测的
+        // 的情况下运行，并且lambda-resolution检测也简化了。虽然这需要一些检查，注意
+        // list.stream().forEach(a)一般情况下，不检测或者除内部之外的任何地方的计算都不检测。
+        // 其他较少使用的方法并不能充分利用这些方式。
+        // ArrayListSpliterator是java8才提供的。用来可以把ArrayList进行并行处理。
+        // 后面单独介绍Spliterator
         private final ArrayList<E> list;
         private int index; // current index, modified on advance/split
         private int fence; // -1 until used; then one past last index
@@ -1473,6 +1544,7 @@ public class ArrayList<E> extends AbstractList<E>
         }
     }
 
+    // 通过filter.test找出哪些元素需要被删除。
     @Override
     public boolean removeIf(Predicate<? super E> filter) {
         Objects.requireNonNull(filter);
@@ -1487,6 +1559,7 @@ public class ArrayList<E> extends AbstractList<E>
             @SuppressWarnings("unchecked")
             final E element = (E) elementData[i];
             if (filter.test(element)) {
+                // 如果element元素需要删除，则将index对应的removeSet的index位置设置true。
                 removeSet.set(i);
                 removeCount++;
             }
@@ -1500,6 +1573,7 @@ public class ArrayList<E> extends AbstractList<E>
         if (anyToRemove) {
             final int newSize = size - removeCount;
             for (int i=0, j=0; (i < size) && (j < newSize); i++, j++) {
+                // 找到最近一个为false的元素，也就是没有被删除的元素。
                 i = removeSet.nextClearBit(i);
                 elementData[j] = elementData[i];
             }
@@ -1516,6 +1590,7 @@ public class ArrayList<E> extends AbstractList<E>
         return anyToRemove;
     }
 
+    // 遍历所有元素，通过operator获取需要改变的值
     @Override
     @SuppressWarnings("unchecked")
     public void replaceAll(UnaryOperator<E> operator) {
@@ -1531,6 +1606,7 @@ public class ArrayList<E> extends AbstractList<E>
         modCount++;
     }
 
+    //进行排序
     @Override
     @SuppressWarnings("unchecked")
     public void sort(Comparator<? super E> c) {
@@ -1543,4 +1619,5 @@ public class ArrayList<E> extends AbstractList<E>
     }
 }
 ```
+大概齐完成了，后面会进行性能的比对。及ArrayListSpliterator的使用。
 **未完待续**
