@@ -1447,15 +1447,15 @@ public class ArrayList<E> extends AbstractList<E>
          * these streamlinings.
          */
         // 如果ArrayList是不变的，或者结构不变（没有添加、删除等）。我们就可以
-        // 用Arrays.spliterator实现spliterator。相反，我们在遍历过程中检测到尽可能多的干扰，
+        // 用Arrays.spliterator实现spliterator。相反，我们在遍历过程中检测到尽可能多的冲突，
         // 而不牺牲大量的性能。我们主要依靠这个字段modCounts。这些不能保证检测并发冲突。
         // 在线程干扰中有时过于保守，但是在实践过程中发现足够多的问题是值得的。
-        // 贯彻执行，我们是懒加载fence和expectedModCount，直到我们需要提交我们正在检测的反对
-        // 的状态，从而提高精度。创建具有当前非惰性的值的spliterators，这不适用于SubLists。
+        // 贯彻执行，我们是懒加载fence和expectedModCount，直到我们需要使用该值的时候才去初始化
+        // ，从而提高精度。当创建具有当前非惰性的值的spliterators，这不能用于SubLists。
         // 我们仅在forEach结束时进行一次ConcurrentModificationException检测（性能上最敏感的方法）。
-        // 当时用forEach时（与iterators相反时），我们通常仅检测动作之后的干扰，而不是之前。
+        // 当时用forEach时（与iterators相反时），我们通常仅在动作之后检测冲突，而不是之前。
         // 继续CME-triggering检测，适应于所有其他可能违反的假设，例如null或者给定的array的
-        // 元素大小太小，这些仅能因为干扰而发生。允许forEach的内在循环，在没有任何进一步检测的
+        // 元素大小太小，这些仅能因为冲突而发生。允许forEach的内在循环，在没有任何进一步检测的
         // 的情况下运行，并且lambda-resolution检测也简化了。虽然这需要一些检查，注意
         // list.stream().forEach(a)一般情况下，不检测或者除内部之外的任何地方的计算都不检测。
         // 其他较少使用的方法并不能充分利用这些方式。
@@ -1489,6 +1489,7 @@ public class ArrayList<E> extends AbstractList<E>
             return hi;
         }
 
+        // 尝试去分裂，当前办法为折中分裂。
         public ArrayListSpliterator<E> trySplit() {
             int hi = getFence(), lo = index, mid = (lo + hi) >>> 1;
             return (lo >= mid) ? null : // divide range in half unless too small
@@ -1496,6 +1497,7 @@ public class ArrayList<E> extends AbstractList<E>
                                             expectedModCount);
         }
 
+        // 尝试获取当前遍历的值，true为查找到结果的返回值。
         public boolean tryAdvance(Consumer<? super E> action) {
             if (action == null)
                 throw new NullPointerException();
@@ -1511,6 +1513,7 @@ public class ArrayList<E> extends AbstractList<E>
             return false;
         }
 
+        // 遍历所有剩余没有遍历的值。
         public void forEachRemaining(Consumer<? super E> action) {
             int i, hi, mc; // hoist accesses and checks from loop
             ArrayList<E> lst; Object[] a;
@@ -1535,6 +1538,7 @@ public class ArrayList<E> extends AbstractList<E>
             throw new ConcurrentModificationException();
         }
 
+        // 获取剩余没有遍历的size
         public long estimateSize() {
             return (long) (getFence() - index);
         }
