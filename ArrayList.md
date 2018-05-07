@@ -1620,4 +1620,4 @@ public class ArrayList<E> extends AbstractList<E>
 }
 ```
 大概齐完成了，后面会进行性能的比对。及ArrayListSpliterator的使用。
-**未完待续**
+ArrayList性能还是比较快的，存储了5000个元素花费时间6ms。
