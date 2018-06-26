@@ -129,7 +129,7 @@
             // 如果之前的first为null，也就是list为null,就将last也指向新插入的结点
             last = newNode;
         else
-            // 如果不能空，就将新插入的结点和前一个first结点结合起来。互相连接
+            // 如果不能空，就将新插入的结点和前一个first结点结合起来。互相链接
             f.prev = newNode;
         size++;
         modCount++;
@@ -139,12 +139,16 @@
      * Links e as last element.
      */
     void linkLast(E e) {
+        // 获取尾结点
         final Node<E> l = last;
+        // 构造新的结点
         final Node<E> newNode = new Node<>(l, e, null);
         last = newNode;
         if (l == null)
+            // 如果尾结点为null,表示列表为空，那么头结点也指向该新结点
             first = newNode;
         else
+            // 将链表 链起来
             l.next = newNode;
         size++;
         modCount++;
@@ -152,6 +156,7 @@
 
     /**
      * Inserts element e before non-null Node succ.
+     * 在一个非空结点前，插入一个元素
      */
     void linkBefore(E e, Node<E> succ) {
         // assert succ != null;
@@ -168,6 +173,7 @@
 
     /**
      * Unlinks non-null first node f.
+     * 删除头结点f，f必须非空并等于first
      */
     private E unlinkFirst(Node<E> f) {
         // assert f == first && f != null;
@@ -187,6 +193,7 @@
 
     /**
      * Unlinks non-null last node l.
+     * 删除尾结点l，l必须非空并且等于last
      */
     private E unlinkLast(Node<E> l) {
         // assert l == last && l != null;
@@ -206,6 +213,7 @@
 
     /**
      * Unlinks non-null node x.
+     * 解除非空的结点x
      */
     E unlink(Node<E> x) {
         // assert x != null;
@@ -214,6 +222,7 @@
         final Node<E> prev = x.prev;
 
         if (prev == null) {
+            // 如果prev为null，表示x为头节点，需要重置first
             first = next;
         } else {
             prev.next = next;
@@ -221,6 +230,7 @@
         }
 
         if (next == null) {
+            // 如果next为null，表示x为尾节点，需要重置last
             last = prev;
         } else {
             next.prev = prev;
@@ -235,6 +245,7 @@
 
     /**
      * Returns the first element in this list.
+     * 返回list中的第一个元素
      *
      * @return the first element in this list
      * @throws NoSuchElementException if this list is empty
@@ -248,6 +259,7 @@
 
     /**
      * Returns the last element in this list.
+     * 返回list的最后一个元素
      *
      * @return the last element in this list
      * @throws NoSuchElementException if this list is empty
@@ -261,6 +273,7 @@
 
     /**
      * Removes and returns the first element from this list.
+     * 删除并且返回list中的头结点元素
      *
      * @return the first element from this list
      * @throws NoSuchElementException if this list is empty
@@ -274,6 +287,7 @@
 
     /**
      * Removes and returns the last element from this list.
+     * 删除并返回list中的尾结点。
      *
      * @return the last element from this list
      * @throws NoSuchElementException if this list is empty
@@ -287,6 +301,7 @@
 
     /**
      * Inserts the specified element at the beginning of this list.
+     * 在list的开始处插入元素
      *
      * @param e the element to add
      */
@@ -296,6 +311,7 @@
 
     /**
      * Appends the specified element to the end of this list.
+     * 将指定元素追加到list的尾处。
      *
      * <p>This method is equivalent to {@link #add}.
      *
@@ -311,6 +327,8 @@
      * at least one element {@code e} such that
      * <tt>(o==null&nbsp;?&nbsp;e==null&nbsp;:&nbsp;o.equals(e))</tt>.
      *
+     * 如果list中包含指定的的元素，即返回true。也就是， 当且仅当list包含至少一个当前元素时，返回true。
+     *
      * @param o element whose presence in this list is to be tested
      * @return {@code true} if this list contains the specified element
      */
@@ -321,6 +339,7 @@
     /**
      * Returns the number of elements in this list.
      *
+     * 返回当前list的元素个数
      * @return the number of elements in this list
      */
     public int size() {
@@ -330,7 +349,9 @@
     /**
      * Appends the specified element to the end of this list.
      *
+     * 将指定元素追加到list的尾部。
      * <p>This method is equivalent to {@link #addLast}.
+     * 该方法相当于addLast
      *
      * @param e element to be appended to this list
      * @return {@code true} (as specified by {@link Collection#add})
@@ -350,6 +371,10 @@
      * contained the specified element (or equivalently, if this list
      * changed as a result of the call).
      *
+     * 如果在list中能找到指定的元素，那么将删除第一次发现的元素。
+     * 如果list不报指定的元素，list就不会改变结构。
+     * 当list包含指定的元素，也就是调用后list的结构发生了改变，就回返回true
+     *
      * @param o element to be removed from this list, if present
      * @return {@code true} if this list contained the specified element
      */
@@ -357,6 +382,7 @@
         if (o == null) {
             for (Node<E> x = first; x != null; x = x.next) {
                 if (x.item == null) {
+                    // 遍历list找到第一个为null的元素
                     unlink(x);
                     return true;
                 }
@@ -364,6 +390,7 @@
         } else {
             for (Node<E> x = first; x != null; x = x.next) {
                 if (o.equals(x.item)) {
+                    // 遍历list找到第一个为x的元素
                     unlink(x);
                     return true;
                 }
@@ -379,6 +406,8 @@
      * the specified collection is modified while the operation is in
      * progress.  (Note that this will occur if the specified collection is
      * this list, and it's nonempty.)
+     * 将指定集合的所有元素追加到list的尾部，顺序为指定集合的iterator返回的顺序。
+     * 如果指定集合在进行该操作时被修改，会产生不可知现象。
      *
      * @param c collection containing elements to be added to this list
      * @return {@code true} if this list changed as a result of the call
@@ -395,6 +424,10 @@
      * the right (increases their indices).  The new elements will appear
      * in the list in the order that they are returned by the
      * specified collection's iterator.
+     *
+     * 插入指定集合的所有元素进入到该list，在指定位置开始。向右移动在该位置的元素和所有后续元素
+     * （并增加他们的索引）。新元素的顺序为他们迭代器返回的顺序。
+     *
      *
      * @param index index at which to insert the first element
      *              from the specified collection
@@ -413,9 +446,12 @@
 
         Node<E> pred, succ;
         if (index == size) {
+            //在该列表尾部追加列表
             succ = null;
             pred = last;
         } else {
+            //在列表中介插入列表 succ 为需要向后移动的首个原始数据
+            //pred记录为插入列表链接的元素
             succ = node(index);
             pred = succ.prev;
         }
@@ -433,6 +469,7 @@
         if (succ == null) {
             last = pred;
         } else {
+            //修复与原始链表断开的剩余元素。
             pred.next = succ;
             succ.prev = pred;
         }
@@ -445,12 +482,16 @@
     /**
      * Removes all of the elements from this list.
      * The list will be empty after this call returns.
+     * 将该列表所有元素移除。当调用该方法后列表将为空。
      */
     public void clear() {
         // Clearing all of the links between nodes is "unnecessary", but:
         // - helps a generational GC if the discarded nodes inhabit
         //   more than one generation
         // - is sure to free memory even if there is a reachable Iterator
+
+        // 清除节点之间的所有链接是“不必要的”，但是：如果抛弃的结点驻留超过一代GC，
+        // 即使有一个可达迭代器，也可以释放内存。
         for (Node<E> x = first; x != null; ) {
             Node<E> next = x.next;
             x.item = null;
@@ -464,10 +505,11 @@
     }
 
 
-    // Positional Access Operations
+    // Positional Access Operations 位置访问操作
 
     /**
      * Returns the element at the specified position in this list.
+     * 返回list中指定位置的元素。
      *
      * @param index index of the element to return
      * @return the element at the specified position in this list
@@ -481,6 +523,7 @@
     /**
      * Replaces the element at the specified position in this list with the
      * specified element.
+     * 使用指定元素替换列表中指定位置的元素。
      *
      * @param index index of the element to replace
      * @param element element to be stored at the specified position
@@ -500,6 +543,7 @@
      * Shifts the element currently at that position (if any) and any
      * subsequent elements to the right (adds one to their indices).
      *
+     * 在列表的指定位置，插入一个指定元素。右移指定位置及后续元素。
      * @param index index at which the specified element is to be inserted
      * @param element element to be inserted
      * @throws IndexOutOfBoundsException {@inheritDoc}
@@ -508,15 +552,16 @@
         checkPositionIndex(index);
 
         if (index == size)
-            linkLast(element);
+            linkLast(element);  //在最后位置插入元素
         else
-            linkBefore(element, node(index));
+            linkBefore(element, node(index)); //在中间位置插入元素
     }
 
     /**
      * Removes the element at the specified position in this list.  Shifts any
      * subsequent elements to the left (subtracts one from their indices).
      * Returns the element that was removed from the list.
+     * 如初列表中指定位置的元素。左移后续的所有元素。返回被删除的元素。
      *
      * @param index the index of the element to be removed
      * @return the element previously at the specified position
@@ -566,7 +611,7 @@
      */
     Node<E> node(int index) {
         // assert isElementIndex(index);
-
+        // 进行二分法，遍历找到指定位置的元素。
         if (index < (size >> 1)) {
             Node<E> x = first;
             for (int i = 0; i < index; i++)
@@ -580,7 +625,7 @@
         }
     }
 
-    // Search Operations
+    // Search Operations 搜索操作
 
     /**
      * Returns the index of the first occurrence of the specified element
@@ -588,6 +633,7 @@
      * More formally, returns the lowest index {@code i} such that
      * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
      * or -1 if there is no such index.
+     * 返回在列表中返回指定元素首次发现的index。如果为-1说明不包含该元素。
      *
      * @param o element to search for
      * @return the index of the first occurrence of the specified element in
@@ -617,6 +663,7 @@
      * More formally, returns the highest index {@code i} such that
      * <tt>(o==null&nbsp;?&nbsp;get(i)==null&nbsp;:&nbsp;o.equals(get(i)))</tt>,
      * or -1 if there is no such index.
+     * 返回在list中最后一次出现该指定元素的index。
      *
      * @param o element to search for
      * @return the index of the last occurrence of the specified element in
@@ -644,7 +691,7 @@
 
     /**
      * Retrieves, but does not remove, the head (first element) of this list.
-     *
+     * 检索，但是不可以删除，返回的为list的头指针。
      * @return the head of this list, or {@code null} if this list is empty
      * @since 1.5
      */
@@ -666,6 +713,7 @@
 
     /**
      * Retrieves and removes the head (first element) of this list.
+     * 检索并删除 list的第一个元素。
      *
      * @return the head of this list, or {@code null} if this list is empty
      * @since 1.5
@@ -677,6 +725,7 @@
 
     /**
      * Retrieves and removes the head (first element) of this list.
+     * 检索和删除list的第一个元素。
      *
      * @return the head of this list
      * @throws NoSuchElementException if this list is empty
@@ -688,6 +737,7 @@
 
     /**
      * Adds the specified element as the tail (last element) of this list.
+     * 在list的尾部添加一个指定元素。
      *
      * @param e the element to add
      * @return {@code true} (as specified by {@link Queue#offer})
@@ -697,9 +747,10 @@
         return add(e);
     }
 
-    // Deque operations
+    // Deque operations 双端队列操作
     /**
      * Inserts the specified element at the front of this list.
+     * 在队头插入一个元素。
      *
      * @param e the element to insert
      * @return {@code true} (as specified by {@link Deque#offerFirst})
@@ -712,6 +763,7 @@
 
     /**
      * Inserts the specified element at the end of this list.
+     * 队尾插入一个元素。
      *
      * @param e the element to insert
      * @return {@code true} (as specified by {@link Deque#offerLast})
@@ -725,6 +777,7 @@
     /**
      * Retrieves, but does not remove, the first element of this list,
      * or returns {@code null} if this list is empty.
+     * 检索，但不删除 list的第一个元素
      *
      * @return the first element of this list, or {@code null}
      *         if this list is empty
@@ -738,6 +791,7 @@
     /**
      * Retrieves, but does not remove, the last element of this list,
      * or returns {@code null} if this list is empty.
+     * 检索，但不删除 list的最后一个元素
      *
      * @return the last element of this list, or {@code null}
      *         if this list is empty
@@ -751,6 +805,7 @@
     /**
      * Retrieves and removes the first element of this list,
      * or returns {@code null} if this list is empty.
+     * 检索并且删除list的第一个元素
      *
      * @return the first element of this list, or {@code null} if
      *     this list is empty
@@ -764,6 +819,7 @@
     /**
      * Retrieves and removes the last element of this list,
      * or returns {@code null} if this list is empty.
+     * 检索并删除lsit的最后一个元素
      *
      * @return the last element of this list, or {@code null} if
      *     this list is empty
@@ -777,6 +833,7 @@
     /**
      * Pushes an element onto the stack represented by this list.  In other
      * words, inserts the element at the front of this list.
+     * 将一个元素推入栈定，也就是，在list队头插入一个元素。
      *
      * <p>This method is equivalent to {@link #addFirst}.
      *
@@ -806,6 +863,7 @@
      * Removes the first occurrence of the specified element in this
      * list (when traversing the list from head to tail).  If the list
      * does not contain the element, it is unchanged.
+     * 删除在队列中首次出现的该指定元素，顺序为从头到尾、如果list不包含该元素则结构不变。
      *
      * @param o element to be removed from this list, if present
      * @return {@code true} if the list contained the specified element
@@ -819,6 +877,7 @@
      * Removes the last occurrence of the specified element in this
      * list (when traversing the list from head to tail).  If the list
      * does not contain the element, it is unchanged.
+     * 删除在队列中最后一次出现的该指定元素。顺序为从头到尾。
      *
      * @param o element to be removed from this list, if present
      * @return {@code true} if the list contained the specified element
@@ -1036,6 +1095,7 @@
     /**
      * Returns an array containing all of the elements in this list
      * in proper sequence (from first to last element).
+     * 返回一个包含list所有元素的数组。
      *
      * <p>The returned array will be "safe" in that no references to it are
      * maintained by this list.  (In other words, this method must allocate
