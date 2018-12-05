@@ -34,6 +34,7 @@
            holder.hasAnyOfTheFlags(ViewHolder.FLAG_REMOVED | ViewHolder.FLAG_INVALID) || !holder.isUpdated() || canReuseUpdatedViewHolder(holder) -->
            6.1.2.1  true mAttachedScrap.add(holder);
            6.1.2.2  false mChangedScrap.add(holder);
+
 总结：如果Holder无效最终放入getRecycledViewPool，否则mAttachedScrap
 
 ## 回收另外一个分支
@@ -45,8 +46,8 @@
   vh.setIsRecyclable(true);
 5. recycler.quickRecycleScrapView(scrap);
 6. recycleViewHolderInternal(ViewHolder holder)
-  `forceRecycle || holder.isRecyclable()` 成立
-  `(mViewCacheMax > 0 && !holder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID | ViewHolder.FLAG_REMOVED |   ViewHolder.FLAG_UPDATE | ViewHolder.FLAG_ADAPTER_POSITION_UNKNOWN))` 不成立，包含ViewHolder.FLAG_INVALID
+        `forceRecycle || holder.isRecyclable()` 成立
+        `(mViewCacheMax > 0 && !holder.hasAnyOfTheFlags(ViewHolder.FLAG_INVALID | ViewHolder.FLAG_REMOVED |   ViewHolder.FLAG_UPDATE | ViewHolder.FLAG_ADAPTER_POSITION_UNKNOWN))` 不成立，包含ViewHolder.FLAG_INVALID
 7. `addViewHolderToRecycledViewPool(ViewHolder holder, boolean dispatchRecycled)`
 8. `getRecycledViewPool().putRecycledView(holder);`  最终放到了getRecycledViewPool中。
 
@@ -63,8 +64,10 @@
 7. LinerLayout.next
 8. getViewForPosition
 9. tryGetViewHolderForPositionByDeadline
-  9.1 isPreLayout() --> getChangedScrapViewForPosition(int position) //如果是pre-layout，会从mChangedScrap获取复用
-  9.2 getScrapOrHiddenOrCachedHolderForPosition(position, dryRun)
+
+    9.1 isPreLayout() --> getChangedScrapViewForPosition(int position) //如果是pre-layout，会从mChangedScrap获取复用
+
+    9.2 getScrapOrHiddenOrCachedHolderForPosition(position, dryRun)
   		9.2.1 mAttachedScrap 首先从该处获取，
 	      9.2.2 mChildHelper.findHiddenNonRemovedView(position) 拿到隐藏的ViewHolder
 	      9.2.3 mCachedViews //Search in our first-level recycled view cache. 最后从一级缓存获取
@@ -74,9 +77,12 @@
 	      9.2.4 mAdapter.hasStableIds() --> getScrapOrCachedViewForId() //仍然需要hasStableIds
 	      // 首先mAttachedScrap
 	      // 之后mCachedViews
-     9.3 mViewCacheExtension //外部扩展
-     9.4 getRecycledViewPool().getRecycledView(type) //此处查到holder被resetInternal，即需要重新bind
-     9.5 mAdapter.createViewHolder(RecyclerView.this, type); //最后，create
+
+    9.3 mViewCacheExtension //外部扩展
+
+    9.4 getRecycledViewPool().getRecycledView(type) //此处查到holder被resetInternal，即需要重新bind
+
+    9.5 mAdapter.createViewHolder(RecyclerView.this, type); //最后，create
 
 ## bind过程
 
