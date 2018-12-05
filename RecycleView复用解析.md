@@ -8,14 +8,15 @@
  2.  mObservable.notifyChanged()
  3. mObservers.get(i).onChanged();
  4. setDataSetChangedAfterLayout();
-	4.1.1 markKnownViewsInvalid  
+         4.1.1 markKnownViewsInvalid  
          //1 Mark all known views as invalid，仅标记可见的布局为ViewHolder.FLAG_UPDATE | ViewHolder.FLAG_INVALID
          //2 mAdapter.hasStableIds() true -> mCachedViews 标记 ViewHolder.FLAG_UPDATE | ViewHolder.FLAG_INVALID
          //3 mAdapter.hasStableIds() false -> addViewHolderToRecycledViewPool ->getRecycledViewPool().putRecycledView(holder); AND mCachedViews.clear();
          // we cannot re-use cached views in this case. Recycle them all
-4.1.2 markItemDecorInsetsDirty
+         4.1.2 markItemDecorInsetsDirty
          //child.getLayoutParams()).mInsetsDirty = true;
          //mCachedViews layoutParams.mInsetsDirty = true;
+
 5. requestLayout();
 
 ## 回收逻辑
