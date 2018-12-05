@@ -20,20 +20,26 @@
  4.2 requestLayout();
 
 --回收逻辑
-void onLayout(boolean changed, int l, int t, int r, int b)
-dispatchLayout()
-void dispatchLayoutStep2()
-void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state)
-detachAndScrapAttachedViews(recycler); //先回收，在fill，也就是后去查找可以复用的holder。仅处理可见Holder
-scrapOrRecycleView(recycler, i, v);
-recycler.recycleViewHolderInternal(viewHolder);
-addViewHolderToRecycledViewPool(holder, true); //最终放入getRecycledViewPool()
+1. void onLayout(boolean changed, int l, int t, int r, int b)
+2. dispatchLayout()
+3. void dispatchLayoutStep2()
+4. void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state)
+5. detachAndScrapAttachedViews(recycler); //先回收，在fill，也就是后去查找可以复用的holder。仅处理children holder
+6. scrapOrRecycleView(recycler, i, v);
+    6.1 viewHolder.isInvalid() && !viewHolder.isRemoved() && !mRecyclerView.mAdapter.hasStableIds() -->
+        6.1.1 true recycler.recycleViewHolderInternal(viewHolder);
+              addViewHolderToRecycledViewPool(holder, true); //最终放入getRecycledViewPool()
+        6.1.2 false scrapView(View view)
+           holder.hasAnyOfTheFlags(ViewHolder.FLAG_REMOVED | ViewHolder.FLAG_INVALID) || !holder.isUpdated() || canReuseUpdatedViewHolder(holder) -->
+           6.1.2.1  true mAttachedScrap.add(holder);
+           6.1.2.2  false mChangedScrap.add(holder);
+总结：如果Holder无效最终放入getRecycledViewPool，否则mAttachedScrap
 
 --回收另外一个分支
 onLayout
 dispatchLayout
 dispatchLayoutStep3
-removeAndRecycleScrapInt
+removeAndRecycleScrapInt //仅处理mAttachedScrap所缓存Holder
   vh.setIsRecyclable(true);
 recycler.quickRecycleScrapView(scrap);
 recycleViewHolderInternal(ViewHolder holder)
@@ -58,3 +64,23 @@ layoutChunk(RecyclerView.Recycler recycler, RecyclerView.State state,
 LinerLayout.next
 getViewForPosition
 tryGetViewHolderForPositionByDeadline
+  1. isPreLayout() --> getChangedScrapViewForPosition(int position) //如果是pre-layout，会从mChangedScrap获取复用
+  2. getScrapOrHiddenOrCachedHolderForPosition(position, dryRun)
+      2.1 mAttachedScrap 首先从该处获取，
+      2.2 mChildHelper.findHiddenNonRemovedView(position) 拿到隐藏的ViewHolder
+      2.3 mCachedViews //Search in our first-level recycled view cache. 最后从一级缓存获取
+      // invalid view holders may be in cache if adapter has stable ids as they can be
+      // retrieved via getScrapOrCachedViewForId
+      // 通过原厂注释可以知道，has stable才可以使用mCachedViews缓存。在回收处也可以看出。
+      2.4 mAdapter.hasStableIds() --> getScrapOrCachedViewForId() //仍然需要hasStableIds
+      // 首先mAttachedScrap
+      // 之后mCachedViews
+  3. mViewCacheExtension //外部扩展
+  4. getRecycledViewPool().getRecycledView(type) //此处查到holder被resetInternal，即需要重新bind
+  5. mAdapter.createViewHolder(RecyclerView.this, type); //最后，create
+
+--bind过程
+tryGetViewHolderForPositionByDeadline(int position,
+                boolean dryRun, long deadlineNs)
+tryBindViewHolderByDeadline
+mAdapter.bindViewHolder(holder, offsetPosition);
