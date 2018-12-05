@@ -84,3 +84,31 @@ tryGetViewHolderForPositionByDeadline(int position,
                 boolean dryRun, long deadlineNs)
 tryBindViewHolderByDeadline
 mAdapter.bindViewHolder(holder, offsetPosition);
+
+至此RecyclerView的复用机制已经差不多了。至此也看到了我的问题也出现了答案的线索。
+因为是notifyDataSetChanged出发的刷新，会将所有ViewHolder标记为FLAG_INVALID。
+在回收ViewHolder时，会放入getRecycledViewPool中。
+RecycledViewPool官方注释，RecycledViewPool lets you share Views between multiple RecyclerViews.
+作用为多个RecyclerViews之间复用ViewHolder。
+可以通过setRecycledViewPool进行设置。
+SparseArray<ScrapData> mScrap = new SparseArray<>(); 用来存储不同类型的ViewHolder
+static class ScrapData {
+    ArrayList<ViewHolder> mScrapHeap = new ArrayList<>();
+    int mMaxScrap = DEFAULT_MAX_SCRAP;
+    long mCreateRunningAverageNs = 0;
+    long mBindRunningAverageNs = 0;
+}
+默认mMaxScrap大小为5个
+private static final int DEFAULT_MAX_SCRAP = 5;
+也就是做多存储5个。我的项目正好有6个Item显示，就导致只能存储 1,2,3,4,5 而0没有进行存储
+onBind的时候就会出现0 - 绑定 1,1 绑定2... 的问题。
+
+解决办法为通过
+new一个RecyclerView.RecycledViewPool， 并设置recycledViewPool.setMaxRecycledViews(0, 6);
+第一个参数viewType，我这里仅有一种type，所以就写0
+最终通过mRecycleList.setRecycledViewPool(recycledViewPool); 设置RecycledViewPool。
+至此大工告成。
+
+
+RecyclerView源码有1w多行。刚看的时候无从下手，向其他博主所说的见森林而不见树木。
+我就是从notifyDataSetChanged 和 onBindViewHolder入手，查找上下逻辑从而追踪定位问题。
