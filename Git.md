@@ -123,9 +123,9 @@ commit可选，省略相当于用HEAD的指向作为提交ID
 ## 用法二
 `git reset [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]`
 commit可选，省略相当于用HEAD的指向作为提交ID
-1.  git reset --mixed   更改暂存区，更改引用 --mixed为默认参数
-2. git reset --soft 只更改引用
-3. git reset --hard 引用，暂存区，工作区全部改变
+1. git reset --mixed  更改暂存区和本地库引用 --mixed为默认参数
+2. git reset --soft   仅更本地库引用
+3. git reset --hard   本地库引用，暂存区，工作区全部改变
 4. git reset   仅用head指向的目录树，重置暂存区，工作区不受影响，相当于将之前git add加到暂存区的内容撤出暂存区。引用未改变，因为将引用重置到HEAD相当于没有重置
 5. git reset HEAD 同4
 6. git reset --soft HEAD^ **不要用这个**
