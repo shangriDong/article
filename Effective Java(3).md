@@ -14,3 +14,7 @@
     一个public类尽可能减少fields设置为public。
     类的public 易变字段时非线程安全的。
     类提供一个public static final的字段或者提供一个可以活得这类字段的方法是错误的。
+2. 在公有class中，使用方法获取而不是直接公开fields
+	公有类不应暴漏可变fields。暴漏不可变fields并没有什么危害。
+	但是有些时候是可取的，比如在包内私有或者私有嵌套类可以暴漏fields，无论是可变的还是不可变的fields。
+    	
