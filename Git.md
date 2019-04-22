@@ -1,4 +1,4 @@
-﻿![这里写图片描述](http://img.blog.csdn.net/20170112105739374?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZG9uZ3FpdXNoYW4=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
+![这里写图片描述](http://img.blog.csdn.net/20170112105739374?watermark/2/text/aHR0cDovL2Jsb2cuY3Nkbi5uZXQvZG9uZ3FpdXNoYW4=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70/gravity/SouthEast)
 
 Git 三个工作区域关系
 
@@ -516,3 +516,51 @@ git push origin --delete 1.0.0
 // 旧版本Git
 git push origin :refs/tags/1.0.0
 ```
+
+####什么时候应该用 git merge？
+1. local分支还需要继续前进，也就是是一个well-known的分支。
+   比如feature分支，bugfix分支就不可以使用git rebase
+
+####什么时候应该使用rebase？
+1. 只要local分支上需要rebase的所有commits历史没有被push过，就可以安全的使用git rebase操作。
+2. 对于不再有子分支的branch，并且为rebase而会被重写的commits都还没有push分享过，可以比较安全的进行rebase操作。
+tag
+git rebase -i HEAD～4 //将最近4次提交重新提交
+//参数
+p,pick:直接使用该次提交
+r,reword:使用该次提交，但重新编辑提交信息
+e,edit:停止到该次提交，通过`git commit --amend`追加提交，完毕之后不要忘记使用`git rebase --continue`完成这此rebase
+s,squash,压缩提交，将和上一次提交合并为一个提交
+x,exec,运行命令
+d,drop,移除这次提交
+
+# Commands:
+# p, pick = use commit
+# r, reword = use commit, but edit the commit message
+# e, edit = use commit, but stop for amending //执行git commit --amend "修改之后的message"，再执行git rebase --continue即可将该提交的message修改并返回到最新状态
+# s, squash = use commit, but meld into previous commit
+# f, fixup = like "squash", but discard this commit's log message
+# x, exec = run command (the rest of the line) using shell
+
+"git rebase --onto base from to"
+命令的意义使用(from, to]所指定的范围内的所有commit在base这个commit之上进行重建(左开右闭)
+
+# --preserve-merges
+#   Instead of ignoring merges, try to recreate them.  试着重新创建merges，而不是忽略他们。
+
+git rebase <upstream-branch-name> <to-branch-name>
+执行上述命令的过程为：
+1. 切换到to-branch分支；
+2. 将to-branch中比upstream-branch多的commit先撤销掉，并将这些commit放在一块临时存储区（.git/rebase）；
+3. 将upstream-branch中比to-branch多的commit应用到to-branch上，此刻to-branch和upstream-branch的代码状态一致；
+4. 将存放的临时存储区的commit重新应用到to-branch上；
+5. 结束。
+执行完上述第3步后，to-branch的代码状态已经改变，接着执行第4步时则可能会产生合并冲突。
+
+解决合并冲突几个常见的办法是：
+1. 手动编辑冲突文件，手动删除或者保留冲突的代码；
+2. 对于“both added”、“both deleted”、“both modified”等类型的冲突，若想完整地保留某一方的修改可以执行git checkout --ours(或者--theirs) <文件名>来选择想要保留的版本。需要注意的是由于git rebase 是先撤销再应用commit，所以这里的ours指的是upstream-branch，theirs指的是我们将要应用的临时commit。
+3. 对于“added by us/them”、“deleted by us/them”等类型的冲突需要使用git rm <file-name>和git add <file-name>来删除/添加file。在此过程中需要特别注意谁是us，谁是them。
+
+冲突解决完之后，使用git add <file-name>来标记冲突已解决，最后执行git rebase --continue继续。
+
